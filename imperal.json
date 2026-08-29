@@ -1,0 +1,613 @@
+{
+  "manifest_schema_version": 3,
+  "sdk_version": "5.13.0",
+  "app_id": "brex-connector",
+  "version": "0.1.0",
+  "name": "Brex",
+  "description": "Connect your own Brex account (bring your own admin-generated user token from dashboard.brex.com Developer Settings) to read cards, transactions, users, expenses, budgets, departments, and locations, plus value-add spend and card-utilization reports. Expense creation, user department updates, and card suspend/unsuspend are supported. Bill Pay (vendor invoices) is out of scope this release.",
+  "icon": "icon.svg",
+  "actions_explicit": true,
+  "system": false,
+  "capabilities": [
+    "brex:read",
+    "brex:write"
+  ],
+  "tools": [
+    {
+      "name": "connect_brex",
+      "description": "Connect your own Brex account by saving your admin-generated user token (from dashboard.brex.com > Developer Settings), after checking it actually works.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "create:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "user_token": {
+            "default": "",
+            "description": "Your Brex user token (dashboard.brex.com > Developer Settings).",
+            "title": "User Token",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "description": "Optional friendly label for this connection, e.g. 'Acme Inc Brex'.",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ConnectBrexParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ProviderConnection",
+        "type": "object"
+      },
+      "event": "brex-connector.connect_brex",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "list_connections",
+      "description": "List the connected Brex accounts.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Explicit empty params model -- V17 disallows untyped handlers.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ProviderConnection": {
+            "properties": {
+              "id": {
+                "default": "",
+                "title": "Id",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "title": "ProviderConnection",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/$defs/ProviderConnection"
+            },
+            "title": "Connections",
+            "type": "array"
+          }
+        },
+        "title": "ProviderConnectionList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "disconnect_brex",
+      "description": "Disconnect a Brex account: deletes the saved user token. Nothing in Brex itself is changed.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "delete:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "description": "Which connection to disconnect (see list_connections).",
+            "title": "Connection Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connection_id"
+        ],
+        "title": "DisconnectBrexParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "deleted": {
+            "default": false,
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "DeleteResult",
+        "type": "object"
+      },
+      "event": "brex-connector.disconnect_brex",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "list_entities",
+      "description": "List Brex records of any resource type (cards, transactions, users, expenses, budgets, departments, locations) in the connected Brex account.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "entity": {
+            "description": "Resource type: cards, transactions, users, expenses, budgets, departments, locations.",
+            "title": "Entity",
+            "type": "string"
+          },
+          "filter_expr": {
+            "default": "",
+            "description": "Optional query-string filter supported by the resource (e.g. 'user_id=...').",
+            "title": "Filter Expr",
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "description": "Maximum records to return.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entity"
+        ],
+        "title": "ListEntitiesParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "entity": {
+            "default": "",
+            "title": "Entity",
+            "type": "string"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "title": "EntityList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "get_entity",
+      "description": "Read one Brex record of any resource type in full by its id.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "entity": {
+            "description": "Resource type, same values as list_entities.",
+            "title": "Entity",
+            "type": "string"
+          },
+          "record_id": {
+            "description": "The record's Brex id.",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity",
+          "record_id"
+        ],
+        "title": "GetEntityParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "entity": {
+            "default": "",
+            "title": "Entity",
+            "type": "string"
+          },
+          "record": {
+            "additionalProperties": true,
+            "title": "Record",
+            "type": "object"
+          }
+        },
+        "title": "EntityDetail",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "create_expense",
+      "description": "Create a new expense entry for a Brex user -- an out-of-pocket cost tracked against their account.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "create:expense"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The Brex user id this expense is for.",
+            "title": "User Id",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Expense amount.",
+            "title": "Amount",
+            "type": "number"
+          },
+          "currency": {
+            "default": "USD",
+            "description": "Three-letter currency code.",
+            "title": "Currency",
+            "type": "string"
+          },
+          "memo": {
+            "default": "",
+            "description": "Optional memo/description for the expense.",
+            "title": "Memo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "amount"
+        ],
+        "title": "CreateExpenseParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "brex-connector.create_expense",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "update_user",
+      "description": "Update an existing Brex user's department. Only given fields change.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:user"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The Brex user id to update.",
+            "title": "User Id",
+            "type": "string"
+          },
+          "department_id": {
+            "default": "",
+            "description": "New department id. Leave empty to keep unchanged.",
+            "title": "Department Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "UpdateUserParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "brex-connector.update_user",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "set_card_status",
+      "description": "Suspend or unsuspend a Brex card -- blocks/restores its ability to make new purchases.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:card"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "card_id": {
+            "description": "The Brex card id.",
+            "title": "Card Id",
+            "type": "string"
+          },
+          "suspend": {
+            "description": "True to suspend the card, false to unsuspend it.",
+            "title": "Suspend",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "card_id",
+          "suspend"
+        ],
+        "title": "SetCardStatusParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "brex-connector.set_card_status",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "get_spend_overview_report",
+      "description": "Value-add report: summarize recent Brex transaction spend by category -- total spend and transaction count.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "description": "Number of recent transactions to scan for the overview.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "GetSpendOverviewParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "transaction_count": {
+            "default": 0,
+            "title": "Transaction Count",
+            "type": "integer"
+          },
+          "total_spend": {
+            "default": 0.0,
+            "title": "Total Spend",
+            "type": "number"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "By Category",
+            "type": "object"
+          }
+        },
+        "title": "SpendOverviewReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    },
+    {
+      "name": "get_card_utilization_report",
+      "description": "Value-add report: scan Brex cards and flag active/suspended counts.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Brex account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "description": "Number of cards to scan for the report.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "GetCardUtilizationReportParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "total_cards": {
+            "default": 0,
+            "title": "Total Cards",
+            "type": "integer"
+          },
+          "active_cards": {
+            "default": 0,
+            "title": "Active Cards",
+            "type": "integer"
+          },
+          "suspended_cards": {
+            "default": 0,
+            "title": "Suspended Cards",
+            "type": "integer"
+          }
+        },
+        "title": "CardUtilizationReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_brex-connector_chat"
+    }
+  ],
+  "signals": [],
+  "schedules": [],
+  "required_scopes": [],
+  "icon_size_bytes": 677,
+  "panels": [
+    {
+      "panel_id": "brex_connect",
+      "slot": "left",
+      "title": "Brex",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "brex_connect_help",
+      "slot": "overlay",
+      "title": "How do I set this up?",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "brex_settings",
+      "slot": "center",
+      "title": "",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    }
+  ]
+}
