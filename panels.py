@@ -78,7 +78,7 @@ def _connect_section() -> ui.UINode:
 @ext.panel("brex_connect", slot="left", title="Brex")
 async def brex_connect(ctx, **kwargs) -> object:
     connections = await h._load_connections(ctx)
-    return ui.Stack(direction="v", gap=3, full_width=True, children=[
+    return ui.Stack(direction="v", gap=3, children=[
         _connections_section(connections),
         ui.Divider(),
         _connect_section(),
