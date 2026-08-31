@@ -44,7 +44,7 @@ async def list_entities(ctx, params: ListEntitiesParams) -> ActionResult:
                 query[k] = v
     data = await bc.request(ctx, conn, "GET", bc.entity_path(params.entity), params=query, action=f"list {params.entity}")
     records = data.get("items", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
-    return ActionResult.ok(EntityList(entity=params.entity, count=len(records), records=records))
+    return ActionResult.success(EntityList(entity=params.entity, count=len(records), records=records), summary="Entities listed.")
 
 
 @chat.function(
@@ -63,7 +63,7 @@ async def get_entity(ctx, params: GetEntityParams) -> ActionResult:
             code="BREX_VALIDATION_FAILED",
         )
     record = await bc.request(ctx, conn, "GET", bc.entity_path(params.entity, params.record_id), action=f"get {params.entity}")
-    return ActionResult.ok(EntityDetail(entity=params.entity, record=record if isinstance(record, dict) else {}))
+    return ActionResult.success(EntityDetail(entity=params.entity, record=record if isinstance(record, dict) else {}), summary="Entity retrieved.")
 
 
 @chat.function(
@@ -83,7 +83,7 @@ async def create_expense(ctx, params: CreateExpenseParams) -> ActionResult:
         "memo": params.memo,
     }
     result = await bc.request(ctx, conn, "POST", "/v1/expenses", json_body=body, action="create expense")
-    return ActionResult.ok(WriteResult(ok=True, record_id=(result or {}).get("id", "")))
+    return ActionResult.success(WriteResult(ok=True, record_id=(result or {}).get("id", "")), summary="Expense created.")
 
 
 @chat.function(
@@ -103,7 +103,7 @@ async def update_user(ctx, params: UpdateUserParams) -> ActionResult:
     if not body:
         return ActionResult.error("Nothing to update -- provide department_id.", code="BREX_VALIDATION_FAILED")
     await bc.request(ctx, conn, "PATCH", f"/v2/users/{params.user_id}", json_body=body, action="update user")
-    return ActionResult.ok(WriteResult(ok=True, record_id=params.user_id))
+    return ActionResult.success(WriteResult(ok=True, record_id=params.user_id), summary="User updated.")
 
 
 @chat.function(
@@ -119,4 +119,4 @@ async def set_card_status(ctx, params: SetCardStatusParams) -> ActionResult:
         return err
     status = "SUSPENDED" if params.suspend else "ACTIVE"
     await bc.request(ctx, conn, "PATCH", f"/v1/cards/{params.card_id}", json_body={"status": status}, action="set card status")
-    return ActionResult.ok(WriteResult(ok=True, record_id=params.card_id))
+    return ActionResult.success(WriteResult(ok=True, record_id=params.card_id), summary="Card status updated.")

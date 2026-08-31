@@ -82,7 +82,7 @@ async def connect_brex(ctx, params: ConnectBrexParams) -> ActionResult:
         "user_token": params.user_token,
     })
     await _save_connections(ctx, connections)
-    return ActionResult.ok(ProviderConnection(id=conn_id, label=params.label or "Brex"))
+    return ActionResult.success(ProviderConnection(id=conn_id, label=params.label or "Brex"), summary="Brex connected.")
 
 
 @chat.function(
@@ -93,9 +93,9 @@ async def connect_brex(ctx, params: ConnectBrexParams) -> ActionResult:
 async def list_connections(ctx, params: NoParams) -> ActionResult:
     """List all saved Brex connections (labels only, never tokens)."""
     connections = await _load_connections(ctx)
-    return ActionResult.ok(ProviderConnectionList(
+    return ActionResult.success(ProviderConnectionList(
         connections=[ProviderConnection(id=c.get("id", ""), label=c.get("label", "Brex")) for c in connections]
-    ))
+    ), summary="Connections listed.")
 
 
 @chat.function(
@@ -111,4 +111,4 @@ async def disconnect_brex(ctx, params: DisconnectBrexParams) -> ActionResult:
     if len(remaining) == len(connections):
         return ActionResult.error("Connection not found.", code="BREX_NOT_CONNECTED")
     await _save_connections(ctx, remaining)
-    return ActionResult.ok(DeleteResult(deleted=True, id=params.connection_id))
+    return ActionResult.success(DeleteResult(deleted=True, id=params.connection_id), summary="Brex disconnected.")

@@ -38,10 +38,10 @@ async def get_spend_overview_report(ctx, params: GetSpendOverviewParams) -> Acti
         total += value
         cat = (r.get("merchant", {}) or {}).get("mcc_category") or r.get("category") or "Uncategorized"
         by_category[cat] = by_category.get(cat, 0.0) + value
-    return ActionResult.ok(SpendOverviewReport(
+    return ActionResult.success(SpendOverviewReport(
         transaction_count=len(rows), total_spend=round(total, 2),
         by_category={k: round(v, 2) for k, v in by_category.items()},
-    ))
+    ), summary="Spend overview report retrieved.")
 
 
 @chat.function(
@@ -58,4 +58,4 @@ async def get_card_utilization_report(ctx, params: GetCardUtilizationReportParam
     rows = data.get("items", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
     active = sum(1 for r in rows if (r.get("status") or "").upper() == "ACTIVE")
     suspended = sum(1 for r in rows if (r.get("status") or "").upper() == "SUSPENDED")
-    return ActionResult.ok(CardUtilizationReport(total_cards=len(rows), active_cards=active, suspended_cards=suspended))
+    return ActionResult.success(CardUtilizationReport(total_cards=len(rows), active_cards=active, suspended_cards=suspended), summary="Card utilization report retrieved.")
