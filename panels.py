@@ -28,8 +28,7 @@ import handlers_connection as h
 
 def _settings_button() -> ui.UINode:
     return ui.Button(
-        "App settings", variant="secondary", size="sm", full_width=True,
-        icon="settings", on_click=ui.Call("__panel__brex_settings"),
+        "App settings", variant="secondary", size="sm", icon="settings", on_click=ui.Call("__panel__brex_settings"),
     )
 
 
@@ -54,6 +53,9 @@ def _connections_section(connections: list[dict]) -> ui.UINode:
 
 def _connect_section() -> ui.UINode:
     return ui.Stack(direction="v", gap=3, children=[
+        ui.Button("Connect Brex (OAuth 2.0)", variant="primary", size="sm", icon="login"),
+        ui.Divider(),
+        ui.Text("Or connect via Admin User Token", variant="caption"),
         ui.Form(
             action="connect_brex",
             submit_label="Connect Brex",
@@ -69,8 +71,7 @@ def _connect_section() -> ui.UINode:
             ],
         ),
         ui.Button(
-            "How do I set this up?", variant="ghost", size="sm", full_width=True,
-            on_click=ui.Call("__panel__brex_connect_help"),
+            "How do I set this up?", variant="ghost", size="sm", on_click=ui.Call("__panel__brex_connect_help"),
         ),
     ])
 
